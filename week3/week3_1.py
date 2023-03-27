@@ -7,7 +7,7 @@ from sklearn.metrics import accuracy_score
 iris = load_iris()
 print(iris)
 # 학습용 데이터와 테스트용 데이터 5: 5로 분할
-X_train, X_test, y_train, y_test = train_test_split(iris.data, iris.target, test_size=0.3, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(iris.data, iris.target, test_size=0.5, random_state=42)
 # 의사결정 나무 모델 생성 및 학습
 tree = DecisionTreeClassifier(random_state=42)
 tree.fit(X_train, y_train)
