@@ -3,7 +3,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
-# 데이터셋 불러오기
+# 붓꽃 데이터셋 불러오기
 iris = load_iris()
 print(iris)
 # 학습용 데이터와 테스트용 데이터 5: 5로 분할
