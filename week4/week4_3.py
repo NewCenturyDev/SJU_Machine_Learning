@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
@@ -39,7 +40,7 @@ for ratio in ratios:
     rf_accs.append(rf_accuracy)
 
 # 결과 그래프 출력
-pyplot =
+matplotlib.use('tkagg')
 plt.plot(ratios, nb_accs, label="Naive Bayes")
 plt.plot(ratios, rf_accs, label="Random Forest")
 plt.title('Accuracy by test set ratio')
