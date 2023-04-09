@@ -2,9 +2,9 @@ import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, classification_report
 from sklearn.model_selection import train_test_split
-from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
 
 # 맷플랏립 GUI 백엔드 설정
 matplotlib.use('tkagg')
@@ -12,6 +12,7 @@ matplotlib.use('tkagg')
 # 경로 설정
 TRAIN_DATA_PATH = './data/train.csv'
 TEST_DATA_PATH = './data/test.csv'
+RESULT_OUT_PATH = './data/'
 
 # Pandas 모든 열 보이게 설정
 pd.set_option('display.max_columns', None)
@@ -173,19 +174,20 @@ def make_age_band(data_df):
 def preprocess_data(dataset):
     # 데이터를 전처리한다
     # 불필요한 데이터 제거 (Ticket, Fare, Cabin, Name, PassengerId)
-    dataset['train'] = dataset['train'].drop(['Ticket', 'Fare', 'Cabin', 'Name', 'PassengerId'], axis=1)
-    dataset['test'] = dataset['test'].drop(['Ticket', 'Fare', 'Cabin', 'Name'], axis=1)
+    dataset['train'] = dataset['train'].drop(['Ticket', 'Fare', 'Cabin', 'Name', 'PassengerId', 'Survived'], axis=1)
+    dataset['test'] = dataset['test'].drop(['Ticket', 'Fare', 'Cabin', 'Name', 'PassengerId'], axis=1)
 
-    # 성별 변수의 자료형을 바꿔주어 범주형의 String 데이터로 인식할 수 있게 함
-    dataset['train']['Sex'] = dataset['train']['Sex'].astype(str)
-    dataset['test']['Sex'] = dataset['test']['Sex'].astype(str)
+    # sci-kit 라이브러리의 RFC 모델은 정수와 실수만 인식할 수 있다. 따라서 string 또는 object로 된 범주형 데이터는 정수로 인코딩을 해주어야 한다
+    # 성별 변수의 자료형을 바꿔주어 sci-kit RFC 모델이 인식할 수 있게 함 (0은 남성, 1은 여성으로 인코딩)
+    dataset['train']['Sex'] = dataset['train']['Sex'].map({'male': 0, 'female': 1})
+    dataset['test']['Sex'] = dataset['test']['Sex'].map({'male': 0, 'female': 1})
 
     # 결측치 처리 - 승선항구(Embarked) - S가 제일 많음으로 S로 채워주었다
     dataset['train']['Embarked'] = dataset['train']['Embarked'].fillna('S')
     dataset['test']['Embarked'] = dataset['test']['Embarked'].fillna('S')
-    # 승선항구 코드 변수의 자료형을 바꿔주어 범주형의 String 데이터로 인식할 수 있게 하였다
-    dataset['train']['Embarked'] = dataset['train']['Embarked'].astype(str)
-    dataset['test']['Embarked'] = dataset['test']['Embarked'].astype(str)
+    # 승선항구 코드 변수의 자료형을 바꿔주어 sci-kit RFC 모델이 인식할 수 있게 함 (0은 C항, 1은 Q항, 2는 S항으로 인코딩)
+    dataset['train']['Embarked'] = dataset['train']['Embarked'].map({'C': 0, 'Q': 1, 'S': 2})
+    dataset['test']['Embarked'] = dataset['test']['Embarked'].map({'C': 0, 'Q': 1, 'S': 2})
 
     # 결측치 처리 - 나이(Age) - 승객들의 평균 나이로 채워주었다 (단, 정수값으로)
     dataset['train']['Age'] = dataset['train']['Age'].fillna(int(dataset['train']['Age'].mean()))
@@ -208,10 +210,54 @@ def preprocess_data(dataset):
     print('-------------------------- 전처리된 데이터 출력 (훈련용 데이터) --------------------------')
     print(dataset['train'])
     print('---------------------------------------------------------------------------------')
+    return {
+        'train': dataset['train'],
+        'test': dataset['test']
+    }
+
+
+def train_random_forest(train_data, survived_label):
+    # 랜덤 포레스트 모델을 이용하여 데이터를 학습한다
+    # 학습 데이터와 검증 데이터 분리
+    x_train, x_valid, y_train, y_valid = train_test_split(train_data, survived_label)
+
+    # 시드값 설정
+    random_seed = 77
+    # 모델 생성 및 학습 진행
+    print('학습 시작')
+    rfc = RandomForestClassifier(random_state=random_seed)
+    rfc.fit(x_train, y_train)
+
+    # 검증 데이터를 통해 검증
+    y_predict = rfc.predict(x_valid)
+
+    # 학습 결과 출력
+    print('------------------------ 검증 데이터를 이용한 데이터 정확도 측정 ------------------------')
+    print('Accuracy: {}'.format(accuracy_score(y_valid, y_predict)))
+    print('Model Training Report')
+    print(classification_report(y_predict, y_valid))
+    print('-------------------------------------------------------------------------------')
+    return rfc
+
+
+def validate_with_test_data(rfc, preped_test_data):
+    # 라벨이 없는 주어진 데이터와 학습된 랜덤포레스트 모델을 이용해 최종 예측 결과 도출
+    return rfc.predict(preped_test_data)
+
+
+def save_result_to_csv(passenger_id, test_predicted):
+    # 최종 예측 결과를 도출
+    answer_dataset = pd.DataFrame({'PassengerId': passenger_id, 'Survived': test_predicted})
+    answer_dataset.to_csv(RESULT_OUT_PATH + 'titanic_pred_result.csv', index=False, quoting=3)
 
 
 # 메인 로직
 data = load_titanic_data()
 analyse_data(data['train'])
 # visualize_data_analysis(data['train'])
-preprocess_data(data)
+label = data['train']['Survived']
+test_id = data['test']['PassengerId']
+preped_data = preprocess_data(data)
+rfc_model = train_random_forest(preped_data['train'], label)
+prediction_result = validate_with_test_data(rfc_model, data['test'])
+save_result_to_csv(test_id, prediction_result)
