@@ -218,11 +218,12 @@ def preprocess_data(dataset):
 
 def train_random_forest(train_data, survived_label):
     # 랜덤 포레스트 모델을 이용하여 데이터를 학습한다
-    # 학습 데이터와 검증 데이터 분리
-    x_train, x_valid, y_train, y_valid = train_test_split(train_data, survived_label)
-
-    # 시드값 설정
+    # 시드값 설정 - 잘되라는 의미에서 럭키세븐 두 개에 해당하는 77로 선택
     random_seed = 77
+
+    # 학습 데이터와 검증 데이터 분리 (검증 데이터:학습 데이터 = 25%:75% - 기본값 사용, 랜덤시드는 rfc와 동일하게 고정)
+    x_train, x_valid, y_train, y_valid = train_test_split(train_data, survived_label, random_state=random_seed)
+
     # 모델 생성 및 학습 진행
     print('학습 시작')
     rfc = RandomForestClassifier(random_state=random_seed)
