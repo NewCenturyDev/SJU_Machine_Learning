@@ -254,7 +254,7 @@ def save_result_to_csv(passenger_id, test_predicted):
 # 메인 로직
 data = load_titanic_data()
 analyse_data(data['train'])
-# visualize_data_analysis(data['train'])
+visualize_data_analysis(data['train'])
 label = data['train']['Survived']
 test_id = data['test']['PassengerId']
 preped_data = preprocess_data(data)
