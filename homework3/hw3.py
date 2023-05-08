@@ -145,7 +145,7 @@ def do_train(train_data, train_label):
     accuracy = []
     tries_cnt = 0
     for n_clusters in clusters:
-        estimator = MiniBatchKMeans(n_clusters=n_clusters)
+        estimator = MiniBatchKMeans(n_clusters=n_clusters, random_state=7)
         estimator.fit(x_train)
 
         # 클러스터 성능 지표 표출
@@ -178,7 +178,7 @@ def do_train(train_data, train_label):
     x_validation = x_validation.astype(float) / 255.
 
     # K-Means 클러스터링 모델 초기화 맟 학습 - 클러스터 개수 = 64
-    kmeans = MiniBatchKMeans(n_clusters=64)
+    kmeans = MiniBatchKMeans(n_clusters=64, random_state=7)
     kmeans.fit(x_train)
     cluster_labels = forecast_cluster_labels(kmeans, y_train, False)
 
