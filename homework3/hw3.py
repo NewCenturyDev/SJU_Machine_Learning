@@ -141,7 +141,7 @@ def do_train(train_data, train_label):
     print("실제 라벨: {}".format(y_train[:20]))
 
     # 클러스터 개수를 다르게 해서 테스트
-    clusters = [10, 16, 32, 64, 128, 256]
+    clusters = [10, 16, 32, 64, 128, 256, 512]
     accuracy = []
     tries_cnt = 0
     for n_clusters in clusters:
@@ -169,52 +169,48 @@ def do_train(train_data, train_label):
     })
     print("===== 클러스터 개수에 따른 최종 성능 지표 =====")
     print(results)
+    results.plot(kind='line', x='cluster_n', y='accuracy')
+    plt.show()
 
-    # 256일떄 가장 성능이 좋았음으로 256 채택
+    # 64가 elbow point 임으로 64 채택
     # 검증 데이터의 차원 줄이기 및 정규화
     x_validation = x_validation.reshape(len(x_validation), -1)
     x_validation = x_validation.astype(float) / 255.
 
-    # K-Means 클러스터링 모델 초기화 맟 학습 - 클러스터 개수 = 256
-    kmeans = MiniBatchKMeans(n_clusters=256)
+    # K-Means 클러스터링 모델 초기화 맟 학습 - 클러스터 개수 = 64
+    kmeans = MiniBatchKMeans(n_clusters=64)
     kmeans.fit(x_train)
     cluster_labels = forecast_cluster_labels(kmeans, y_train, False)
 
     return {
         "model": kmeans,
         "labels": cluster_labels,
+        "x_train": x_train,
+        "y_train": y_train,
         "x_validation": x_validation,
         "y_validation": y_validation,
     }
 
 
 def do_validation(kmeans, cluster_labels, x_validation, y_validation):
-    # 검증 데이터 라벨 예측
+    # 64 클러스터 기준 검증 데이터 라벨 예측
     # test_clusters = kmeans.predict(x_validation)
     predicted_labels = forecast_data_labels(kmeans.predict(x_validation), cluster_labels)
 
     # 정확도 표기
-    print("===== 최종 선택된 클러스터의 성능 지표 확인 (256개 클러스터로 분할한 경우) =====")
+    print("===== 최종 선택된 클러스터의 성능 지표 확인 (64개 클러스터로 분할한 경우) =====")
     print('예측 Accuarcy: {}\n'.format(metrics.accuracy_score(y_validation, predicted_labels)))
 
 
-def do_visualize_sample36(x_train, y_train):
-    # 1차원 어레이로 차원 감소
-    x_train = x_train.reshape(len(x_train), -1)
-    # 데이터를 0~1 사이로 노말라이징
-    x_train = x_train.astype(float) / 255.
+def do_visualize_sample64(kmeans, y_train):
     # 라벨값 string을 int numpy array로 변환
     y_train = np.array(list(map(int, y_train)))
-
-    # Initialize and fit KMeans algorithm
-    kmeans = MiniBatchKMeans(n_clusters=36)
-    kmeans.fit(x_train)
 
     # record centroid values
     centroids = kmeans.cluster_centers_
 
     # reshape centroids into images
-    images = centroids.reshape(36, 28, 28)
+    images = centroids.reshape(64, 28, 28)
     images *= 255
     images = images.astype(np.uint8)
 
@@ -222,12 +218,15 @@ def do_visualize_sample36(x_train, y_train):
     cluster_labels = forecast_cluster_labels(kmeans, y_train)
 
     # create figure with subplots using matplotlib.pyplot
-    fig, axs = plt.subplots(6, 6, figsize=(20, 20))
+    fig, axs = plt.subplots(8, 8, figsize=(24, 24))
     plt.gray()
 
     # loop through subplots and add centroid images
     # 36개의 클러스터를 쪼갰을 때, 각 클러스터의 중심 센트로이드 이미지 표출
-    print("===== 센트로이드 이미지 표출 (36클러스터일때) =====")
+    print("===== 센트로이드 이미지 표출 (64클러스터일때) =====")
+    print("===== (별도 창이 열립니다) =====")
+
+    plt.subplots_adjust(hspace=1)
     for i, ax in enumerate(axs.flat):
 
         # determine inferred label using cluster_labels dictionary
@@ -240,7 +239,7 @@ def do_visualize_sample36(x_train, y_train):
         ax.axis('off')
 
     # display the figure
-    fig.show()
+    plt.show()
 
 
 # 메인 로직
@@ -249,4 +248,4 @@ data = load_mnist_data()
 visualize_mnist_data(data["train"], data["label"])
 train_result = do_train(data['train'], data['label'])
 do_validation(train_result["model"], train_result["labels"], train_result["x_validation"], train_result["y_validation"])
-do_visualize_sample36(data["train"], data["label"])
+do_visualize_sample64(train_result["model"], train_result["y_train"])
