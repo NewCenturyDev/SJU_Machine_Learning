@@ -226,7 +226,7 @@ def do_visualize_sample64(kmeans, y_train):
     print("===== 센트로이드 이미지 표출 (64클러스터일때) =====")
     print("===== (별도 창이 열립니다) =====")
 
-    plt.subplots_adjust(hspace=1)
+    plt.subplots_adjust(hspace=1, wspace=0.35, top=0.9, bottom=0.05, left=0.05, right=0.95)
     for i, ax in enumerate(axs.flat):
 
         # determine inferred label using cluster_labels dictionary
