@@ -192,7 +192,7 @@ def do_train(train_data, train_label):
     }
 
 
-def do_validation(kmeans, cluster_labels, x_validation, y_validation):
+def do_validation(kmeans, cluster_labels, x_validation, y_validation, y_train):
     # 64 클러스터 기준 검증 데이터 라벨 예측
     # test_clusters = kmeans.predict(x_validation)
     predicted_labels = forecast_data_labels(kmeans.predict(x_validation), cluster_labels)
@@ -202,7 +202,7 @@ def do_validation(kmeans, cluster_labels, x_validation, y_validation):
     print('예측 Accuarcy: {}\n'.format(metrics.accuracy_score(y_validation, predicted_labels)))
     print('클러스터의 개수: {}'.format(kmeans.n_clusters))
     print('클러스터 응집도: {}'.format(kmeans.inertia_))
-    print('클러스터 구분성: {}'.format(metrics.homogeneity_score(y_validation, kmeans.labels_)))
+    print('클러스터 구분성: {}'.format(metrics.homogeneity_score(y_train, kmeans.labels_)))
 
 
 def do_visualize_sample64(kmeans, y_train):
@@ -250,5 +250,8 @@ data = load_mnist_data()
 # 예시 데이터 보기
 visualize_mnist_data(data["train"], data["label"])
 train_result = do_train(data['train'], data['label'])
-do_validation(train_result["model"], train_result["labels"], train_result["x_validation"], train_result["y_validation"])
+do_validation(
+    train_result["model"], train_result["labels"], train_result["x_validation"],
+    train_result["y_validation"], train_result["y_train"]
+)
 do_visualize_sample64(train_result["model"], train_result["y_train"])
