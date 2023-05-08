@@ -200,6 +200,9 @@ def do_validation(kmeans, cluster_labels, x_validation, y_validation):
     # 정확도 표기
     print("===== 최종 선택된 클러스터의 성능 지표 확인 (64개 클러스터로 분할한 경우) =====")
     print('예측 Accuarcy: {}\n'.format(metrics.accuracy_score(y_validation, predicted_labels)))
+    print('클러스터의 개수: {}'.format(kmeans.n_clusters))
+    print('클러스터 응집도: {}'.format(kmeans.inertia_))
+    print('클러스터 구분성: {}'.format(metrics.homogeneity_score(y_validation, kmeans.labels_)))
 
 
 def do_visualize_sample64(kmeans, y_train):
